@@ -1,62 +1,93 @@
-import { Component } from "react";
-import { ContactForm } from "./ContactForm/ContactForm";
-import { ContactList } from "./ContactList/ContactList";
-import { Filter } from "./Filter/Filter";
-import { Section } from "./Section/Section";
-import { nanoid } from "nanoid";
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { nanoid } from 'nanoid';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
-export class App extends Component {
+import { PhonebookContainer, Title } from './App.styled';
+
+import Section from 'components/Section/Section';
+import ContactForm from 'components/ContactForm/ContactForm';
+import ContactsList from 'components/ContactsList/ContactsList';
+import Filter from 'components/Filter/Filter';
+
+class App extends Component {
+  static defaultProps = {};
+
+  static propTypes = {
+    contacts: PropTypes.array,
+    filter: PropTypes.string,
+  };
+
   state = {
     contacts: [
-      {id: 'id-1', name: 'Rosie Simpson', number: '459-12-56'},
-      {id: 'id-2', name: 'Hermione Kline', number: '443-89-12'},
-      {id: 'id-3', name: 'Eden Clements', number: '645-17-79'},
-      {id: 'id-4', name: 'Annie Copeland', number: '227-91-26'},
+      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
     ],
     filter: '',
-    name: '',
-    number: ''
-  }
+  };
 
-  onInputChange = e => {
-    this.setState({
-      [e.target.name]: e.target.value,
-    })
-  }
+  formSubmitHandler = data => {
+    let id = nanoid();
+    let contact = { id: id, name: data.name, number: data.number };
 
-  onSubmit = e => {
-    e.preventDefault()
-    const alreadyInContacts = this.state.contacts.some(contact => contact.name.toLowerCase() === this.state.name.trim().toLowerCase())
-    if (alreadyInContacts) {
-      alert(`Contact ${this.state.name} is already in List.`)
+    let isContact = this.state.contacts.filter(contact =>
+      contact.name.toLowerCase().includes(data.name.toLowerCase())
+    );
+    console.log(isContact);
+    if (isContact.length) {
+      Notify.warning(`${data.name} is already in contacts`, {
+        background: '#eebf31',
+        fontSize: '16px',
+        width: '350px',
+      });
       return;
     }
+    this.setState(prevState => ({
+      contacts: [...prevState.contacts, contact],
+    }));
+  };
 
-    const newContact = { id: nanoid(), name: this.state.name, number: this.state.number}
-    this.setState((prevState) => ({ contacts: [...prevState.contacts, newContact] }))
-    e.currentTarget.reset();
-  }
+  handleFilter = value => {
+    this.setState(() => ({
+      filter: value,
+    }));
+  };
 
-  onDeleteContact = idToDelete => {
-    const isConfirmed = window.confirm('Are you sure want to delete this contact?');
-    if (isConfirmed) {
-      this.setState({contacts: this.state.contacts.filter(contact => contact.id !== idToDelete) })
-    }
-    
-  }
+  getContacts = () => {
+    const { contacts, filter } = this.state;
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase())
+    );
+  };
+
+  contactDeleteHandler = contactId => {
+    this.setState(
+      ({ contacts }) => ({
+        contacts: contacts.filter(contact => contact.id !== contactId),
+      }),
+      Notify.success('Contact is deleted', {
+        fontSize: '16px',
+        width: '350px',
+      })
+    );
+  };
+
   render() {
-    const filteredContacts = this.state.contacts.filter(contactEl => contactEl.name.toLowerCase().includes(this.state.filter.trim().toLowerCase()))
     return (
-      <div>
-        <Section title="Phonebook">
-          <ContactForm onInputChange={this.onInputChange} onSubmit={this.onSubmit}></ContactForm>
-        </Section>
-        <Section title="Contacts">
-          <Filter filterValue ={this.state.filter} onInputChange = {this.onInputChange}></Filter>
-          <ContactList contactsList={filteredContacts} onDeleteContact = {this.onDeleteContact}></ContactList>
-        </Section>
-      </div>
-      
-    )
+      <PhonebookContainer>
+        <Title>Phonebook</Title>
+        <ContactForm onSubmit={this.formSubmitHandler} />
+        <Section title="Contacts"></Section>
+        <Filter filterByName={this.handleFilter} />
+        <ContactsList
+          contacts={this.getContacts()}
+          onDelete={this.contactDeleteHandler}
+        />
+      </PhonebookContainer>
+    );
   }
-};
+}
+
+export default App;

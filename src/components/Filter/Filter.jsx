@@ -1,10 +1,23 @@
-import css from './Filter.module.css'
+import PropTypes from 'prop-types';
 
-export const Filter = ({ filterValue, onInputChange }) => {
+import { FilterContainer } from 'components/Filter/Filter.styled';
+import { Text } from 'components/ContactsList/ContactsList.slyled';
+import { ContactInput } from 'components/ContactForm/ContactForm.styled';
+
+export default function Filter({ searchQuery, filterByName }) {
   return (
-    <div className={css.filterWrapper}>
-      <label className={css.filterLabel} htmlFor="filter">Find contacts by name</label>
-      <input className={css.filterInput}type="text" id="filter" name="filter" value={filterValue} onChange={onInputChange} placeholder="John" />
-    </div>
-  )
+    <FilterContainer>
+      <Text>Find contacts by name</Text>
+      <ContactInput
+        type="text"
+        value={searchQuery}
+        onChange={event => filterByName(event.target.value)}
+      />
+    </FilterContainer>
+  );
 }
+
+Filter.propTypes = {
+  filterByName: PropTypes.func.isRequired,
+  searchQuery: PropTypes.string,
+};
